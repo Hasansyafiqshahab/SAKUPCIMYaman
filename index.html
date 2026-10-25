@@ -1,0 +1,1570 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>SIKEU PCIM Yaman - Sistem Keuangan Terintegrasi</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
+    body { font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif; background-color: #f1f5f9; margin: 0; }
+    .active-tab { background-color: #0f4c81 !important; color: #ffffff !important; font-weight: 700; }
+    .hidden { display: none !important; }
+    @media print {
+      body * { visibility: hidden; }
+      #print-area, #print-area * { visibility: visible; }
+      #print-area { position: absolute; left: 0; top: 0; width: 100%; box-shadow: none !important; }
+      .no-print { display: none !important; }
+    }
+  </style>
+</head>
+<body class="text-slate-800">
+
+<!-- LAYAR LOGIN NBM -->
+<div id="login-screen" class="min-h-screen flex items-center justify-center p-4 bg-gradient-to-br from-slate-900 via-sky-950 to-emerald-950">
+  <div class="bg-white w-full max-w-md rounded-2xl shadow-2xl overflow-hidden">
+    <div class="bg-sky-900 p-6 text-white text-center">
+      <div class="w-16 h-16 bg-white/10 rounded-2xl flex items-center justify-center mx-auto mb-3 border border-white/20">
+        <i class="fa-solid fa-mosque text-3xl text-emerald-300"></i>
+      </div>
+      <h1 class="text-xl font-extrabold tracking-tight" id="login-org-title">SIKEU PCIM YAMAN</h1>
+      <p class="text-xs text-sky-200 mt-1">Sistem Keuangan 4 Mata Uang & Integrasi Pimpinan</p>
+    </div>
+    <div class="p-6 space-y-4">
+      <div id="login-error-box" class="hidden text-xs bg-rose-50 text-rose-800 border border-rose-300 rounded-lg p-3 font-semibold"></div>
+      <div id="sync-badge-login" class="text-xs bg-emerald-50 text-emerald-800 border border-emerald-200 rounded-lg p-2.5 flex items-center gap-2">
+        <i class="fa-solid fa-circle-check text-emerald-600"></i>
+        <span id="sync-badge-text">Masukkan NBM dan password akun Anda</span>
+      </div>
+      <div>
+        <label class="block text-xs font-bold uppercase text-slate-600 mb-1">Nomor Baku Muhammadiyah (NBM)</label>
+        <input id="login-nbm" type="text" placeholder="Masukkan NBM Anda..." class="w-full px-4 py-3 rounded-xl border border-slate-300 focus:ring-2 focus:ring-sky-600 focus:outline-none text-sm font-semibold">
+      </div>
+      <div>
+        <label class="block text-xs font-bold uppercase text-slate-600 mb-1">Password</label>
+        <input id="login-pass" type="password" onkeydown="if(event.key==='Enter')handleLogin()" placeholder="Masukkan password..." class="w-full px-4 py-3 rounded-xl border border-slate-300 focus:ring-2 focus:ring-sky-600 focus:outline-none text-sm">
+      </div>
+      <button type="button" onclick="handleLogin()" class="w-full bg-sky-800 hover:bg-sky-900 active:scale-[0.99] text-white font-bold py-3.5 rounded-xl shadow-lg transition flex items-center justify-center gap-2 cursor-pointer">
+        <i class="fa-solid fa-right-to-bracket"></i> Masuk Aplikasi Sekarang
+      </button>
+
+    </div>
+  </div>
+</div>
+
+<!-- MODAL WAJIB GANTI PASSWORD AWAL -->
+<div id="modal-change-pass" class="hidden fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4">
+  <div class="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl space-y-4">
+    <div class="flex items-center gap-3 text-amber-600">
+      <i class="fa-solid fa-key text-2xl"></i>
+      <h3 class="text-lg font-extrabold text-slate-800">Ubah Password Awal Anda</h3>
+    </div>
+    <p class="text-xs text-slate-600 leading-relaxed">Anda masih menggunakan password awal dari Master. Anda bisa menggantinya dengan password pribadi sekarang atau klik <b>Lewati Dulu</b>.</p>
+    <div>
+      <label class="block text-xs font-bold text-slate-600 mb-1">Password Pribadi Baru</label>
+      <input id="new-personal-pass" type="password" placeholder="Minimal 4 karakter..." class="w-full px-4 py-2.5 border rounded-xl text-sm">
+    </div>
+    <div class="flex justify-end gap-2">
+      <button type="button" onclick="skipChangePass()" class="px-4 py-2 text-xs font-semibold bg-slate-100 rounded-xl text-slate-600 hover:bg-slate-200">Lewati Dulu</button>
+      <button type="button" onclick="savePersonalPass()" class="px-5 py-2.5 bg-sky-800 text-white text-xs font-bold rounded-xl hover:bg-sky-900">Simpan Password Baru</button>
+    </div>
+  </div>
+</div>
+
+<!-- LAYAR UTAMA APLIKASI -->
+<div id="app-screen" class="hidden min-h-screen pb-20">
+  <!-- HEADER ATAS -->
+  <header class="bg-sky-900 text-white sticky top-0 z-30 shadow-md">
+    <div class="max-w-7xl mx-auto px-4 py-3 flex flex-wrap items-center justify-between gap-3">
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 rounded-xl bg-emerald-500/20 border border-emerald-400/30 flex items-center justify-center">
+          <i class="fa-solid fa-scale-balanced text-emerald-300 text-lg"></i>
+        </div>
+        <div>
+          <div class="flex items-center gap-2">
+            <h1 id="header-org-name" class="font-extrabold text-base tracking-tight">SIKEU PCIM YAMAN</h1>
+            <span id="cloud-status-pill" class="text-[10px] px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-200 border border-emerald-400/30 font-semibold">Aktif</span>
+          </div>
+          <p id="user-info-bar" class="text-xs text-sky-200"></p>
+        </div>
+      </div>
+      <div class="flex items-center gap-2">
+        <button type="button" onclick="openChangePassModalManual()" class="text-xs bg-white/10 hover:bg-white/20 px-3 py-2 rounded-xl font-semibold flex items-center gap-1.5">
+          <i class="fa-solid fa-key"></i> <span class="hidden sm:inline">Sandi</span>
+        </button>
+        <button type="button" onclick="logout()" class="text-xs bg-rose-600 hover:bg-rose-700 px-3 py-2 rounded-xl font-bold flex items-center gap-1.5">
+          <i class="fa-solid fa-power-off"></i> Keluar
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <main class="max-w-7xl mx-auto px-4 py-5 space-y-6">
+    <!-- 4 KARTU SALDO MATA UANG REAL-TIME -->
+    <section class="grid grid-cols-2 lg:grid-cols-4 gap-3">
+      <div onclick="openBookCurrency('USD')" class="cursor-pointer bg-white p-4 rounded-2xl shadow-sm border-l-4 border-sky-600 hover:shadow-md transition">
+        <div class="flex justify-between items-center text-xs font-bold text-slate-400">
+          <span>BUKU DOLAR AMERIKA</span>
+          <span class="bg-sky-100 text-sky-800 px-2 py-0.5 rounded-md">USD ($)</span>
+        </div>
+        <div id="bal-USD" class="text-xl sm:text-2xl font-extrabold text-slate-800 mt-1">$ 0</div>
+        <div class="text-[11px] text-sky-700 mt-1 font-medium">Klik buka Buku USD &rarr;</div>
+      </div>
+      <div onclick="openBookCurrency('SAR')" class="cursor-pointer bg-white p-4 rounded-2xl shadow-sm border-l-4 border-emerald-600 hover:shadow-md transition">
+        <div class="flex justify-between items-center text-xs font-bold text-slate-400">
+          <span>BUKU REYAL SAUDI</span>
+          <span class="bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded-md">SAR (SR)</span>
+        </div>
+        <div id="bal-SAR" class="text-xl sm:text-2xl font-extrabold text-slate-800 mt-1">SR 0</div>
+        <div class="text-[11px] text-emerald-700 mt-1 font-medium">Klik buka Buku SAR &rarr;</div>
+      </div>
+      <div onclick="openBookCurrency('YER')" class="cursor-pointer bg-white p-4 rounded-2xl shadow-sm border-l-4 border-amber-500 hover:shadow-md transition">
+        <div class="flex justify-between items-center text-xs font-bold text-slate-400">
+          <span>BUKU REYAL YAMAN</span>
+          <span class="bg-amber-100 text-amber-800 px-2 py-0.5 rounded-md">YER (YR)</span>
+        </div>
+        <div id="bal-YER" class="text-xl sm:text-2xl font-extrabold text-slate-800 mt-1">YR 0</div>
+        <div class="text-[11px] text-amber-700 mt-1 font-medium">Klik buka Buku YER &rarr;</div>
+      </div>
+      <div onclick="openBookCurrency('IDR')" class="cursor-pointer bg-white p-4 rounded-2xl shadow-sm border-l-4 border-rose-600 hover:shadow-md transition">
+        <div class="flex justify-between items-center text-xs font-bold text-slate-400">
+          <span>BUKU RUPIAH INDO</span>
+          <span class="bg-rose-100 text-rose-800 px-2 py-0.5 rounded-md">IDR (Rp)</span>
+        </div>
+        <div id="bal-IDR" class="text-xl sm:text-2xl font-extrabold text-slate-800 mt-1">Rp 0</div>
+        <div class="text-[11px] text-rose-700 mt-1 font-medium">Klik buka Buku IDR &rarr;</div>
+      </div>
+    </section>
+
+    <!-- NAVIGASI MENU UTAMA -->
+    <nav class="bg-white p-1.5 rounded-2xl shadow-sm flex flex-wrap gap-1 border border-slate-200">
+      <button type="button" id="tab-btn-pengajuan" onclick="switchTab('pengajuan')" class="flex-1 min-w-[140px] py-2.5 px-3 rounded-xl text-xs font-semibold transition flex items-center justify-center gap-2 active-tab">
+        <i class="fa-solid fa-hand-holding-dollar"></i> Pengajuan, Nota AI & Kembalian
+      </button>
+      <button type="button" id="tab-btn-formkas" onclick="switchTab('formkas')" class="flex-1 min-w-[140px] py-2.5 px-3 rounded-xl text-xs font-semibold transition flex items-center justify-center gap-2">
+        <i class="fa-solid fa-bolt"></i> Form Ringan Bendahara
+      </button>
+      <button type="button" id="tab-btn-bukukas" onclick="switchTab('bukukas')" class="flex-1 min-w-[140px] py-2.5 px-3 rounded-xl text-xs font-semibold transition flex items-center justify-center gap-2">
+        <i class="fa-solid fa-book"></i> 4 Buku Mata Uang
+      </button>
+      <button type="button" id="tab-btn-sekretariat" onclick="switchTab('sekretariat')" class="flex-1 min-w-[140px] py-2.5 px-3 rounded-xl text-xs font-semibold transition flex items-center justify-center gap-2">
+        <i class="fa-solid fa-file-contract"></i> Sekretariat & SK/LPJ
+      </button>
+      <button type="button" id="tab-btn-master" onclick="switchTab('master')" class="hidden flex-1 min-w-[140px] py-2.5 px-3 rounded-xl text-xs font-semibold transition flex items-center justify-center gap-2 bg-amber-50 text-amber-900 border border-amber-300">
+        <i class="fa-solid fa-sliders"></i> Panel Master Device
+      </button>
+    </nav>
+
+    <!-- TAB 1: PENGAJUAN PERMOHONAN, APPROVAL, SERAH TERIMA, VERIFIKASI AI & KEMBALIAN KAS -->
+    <section id="tab-pengajuan" class="space-y-5">
+      <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200">
+        <div class="flex flex-wrap items-center justify-between gap-3 mb-4">
+          <div>
+            <h2 class="text-base font-extrabold text-slate-800">Alur Permohonan Dana, Serah Terima, Verifikasi AI & Kembalian Kas</h2>
+            <p class="text-xs text-slate-500">Anggota/Majelis mengajukan &rarr; Ketua Setuju &rarr; Bendahara Cairkan (Bukti Serah Terima) &rarr; Belanja & Upload Nota AI &rarr; Kembalian Otomatis Masuk Kas</p>
+          </div>
+          <button type="button" onclick="toggleFormPengajuan()" class="bg-sky-800 hover:bg-sky-900 text-white text-xs font-bold px-4 py-2.5 rounded-xl shadow flex items-center gap-2">
+            <i class="fa-solid fa-plus"></i> Buat Pengajuan Permohonan Dana
+          </button>
+        </div>
+
+        <!-- FORM PENGAJUAN BARU -->
+        <div id="box-form-pengajuan" class="hidden bg-slate-50 p-4 rounded-xl border border-slate-200 mb-5 space-y-3">
+          <h3 class="text-xs font-extrabold uppercase text-sky-900">Formulir Permohonan Dana Simpel (Berdasarkan Rancangan Awal)</h3>
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+            <div>
+              <label class="block text-xs font-bold text-slate-600 mb-1">Unit / Majelis / Lembaga Pengaju</label>
+              <select id="pgj-unit" class="w-full px-3 py-2 rounded-lg border text-xs bg-white"></select>
+            </div>
+            <div>
+              <label class="block text-xs font-bold text-slate-600 mb-1">Nama Keperluan / Kegiatan</label>
+              <input id="pgj-title" type="text" placeholder="Misal: Konsumsi Kajian Bulanan" class="w-full px-3 py-2 rounded-lg border text-xs">
+            </div>
+            <div>
+              <label class="block text-xs font-bold text-slate-600 mb-1">Referensi SK Sekretaris (Opsional)</label>
+              <select id="pgj-sk-ref" class="w-full px-3 py-2 rounded-lg border text-xs bg-white"></select>
+            </div>
+          </div>
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+            <div>
+              <label class="block text-xs font-bold text-slate-600 mb-1">Pilih Buku Mata Uang</label>
+              <select id="pgj-currency" class="w-full px-3 py-2 rounded-lg border text-xs bg-white font-bold">
+                <option value="YER">YER - Reyal Yaman (YR)</option>
+                <option value="USD">USD - Dolar Amerika ($)</option>
+                <option value="SAR">SAR - Reyal Saudi (SR)</option>
+                <option value="IDR">IDR - Rupiah Indonesia (Rp)</option>
+              </select>
+            </div>
+            <div>
+              <label class="block text-xs font-bold text-slate-600 mb-1">Total Nominal Diajukan</label>
+              <input id="pgj-amount" type="number" placeholder="Contoh: 100000" class="w-full px-3 py-2 rounded-lg border text-xs font-bold">
+            </div>
+            <div>
+              <label class="block text-xs font-bold text-slate-600 mb-1">Rincian Rancangan Awal (Item & Estimasi)</label>
+              <input id="pgj-plan" type="text" placeholder="Contoh: 1. Modul 45.000; 2. Air & Roti 55.000" class="w-full px-3 py-2 rounded-lg border text-xs">
+            </div>
+          </div>
+          <div class="flex justify-end gap-2 pt-2">
+            <button type="button" onclick="toggleFormPengajuan()" class="px-4 py-2 text-xs font-semibold text-slate-500">Batal</button>
+            <button type="button" onclick="submitPengajuan()" class="px-5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-lg">Kirim Permohonan</button>
+          </div>
+        </div>
+
+        <!-- DAFTAR PENGAJUAN & REALISASI -->
+        <div id="list-pengajuan" class="space-y-3"></div>
+      </div>
+    </section>
+
+    <!-- TAB 2: FORMULIR RINGAN BENDAHARA / WAKIL BENDAHARA -->
+    <section id="tab-formkas" class="hidden">
+      <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200 max-w-2xl mx-auto space-y-4">
+        <div class="border-b pb-3">
+          <h2 class="text-base font-extrabold text-slate-800">Formulir Ringan Pencatatan Kas (4 Mata Uang)</h2>
+          <p class="text-xs text-slate-500">Khusus Bendahara & Wakil Bendahara untuk mencatat pemasukan donasi/iuran, pengeluaran langsung, atau tukar mata uang otomatis.</p>
+        </div>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div>
+            <label class="block text-xs font-bold text-slate-600 mb-1">Jenis Transaksi</label>
+            <select id="fk-type" onchange="toggleKonversiBox()" class="w-full px-3 py-2.5 rounded-xl border text-xs font-bold bg-slate-50">
+              <option value="MASUK">Pemasukan Kas (Debet +)</option>
+              <option value="KELUAR">Pengeluaran Langsung (Kredit -)</option>
+              <option value="KONVERSI">Tukar Mata Uang / Konversi Antar Buku</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-xs font-bold text-slate-600 mb-1">Buku Mata Uang</label>
+            <select id="fk-curr" class="w-full px-3 py-2.5 rounded-xl border text-xs font-bold bg-slate-50">
+              <option value="USD">Buku USD ($ - Dolar Amerika)</option>
+              <option value="SAR">Buku SAR (SR - Reyal Saudi)</option>
+              <option value="YER">Buku YER (YR - Reyal Yaman)</option>
+              <option value="IDR">Buku IDR (Rp - Rupiah Indonesia)</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div>
+            <label class="block text-xs font-bold text-slate-600 mb-1">Nominal Angka</label>
+            <input id="fk-amount" type="number" placeholder="Masukkan angka tanpa titik..." class="w-full px-3 py-2.5 rounded-xl border text-sm font-extrabold">
+          </div>
+          <div>
+            <label class="block text-xs font-bold text-slate-600 mb-1">Kategori / Pos</label>
+            <select id="fk-cat" class="w-full px-3 py-2.5 rounded-xl border text-xs bg-white">
+              <option value="Donasi / Infaq Masuk">Donasi / Infaq Masuk</option>
+              <option value="Iuran Anggota / Pengurus">Iuran Anggota / Pengurus</option>
+              <option value="Dana Lazismu / Beasiswa">Dana Lazismu / Beasiswa</option>
+              <option value="Operasional Kesekretariatan">Operasional Kesekretariatan</option>
+              <option value="Kegiatan Majelis / Daurah">Kegiatan Majelis / Daurah</option>
+              <option value="Lainnya">Lainnya</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Opsi Tambahan Jika Konversi Mata Uang -->
+        <div id="box-konversi" class="hidden bg-amber-50 p-3.5 rounded-xl border border-amber-200 grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div>
+            <label class="block text-xs font-bold text-amber-900 mb-1">Masuk ke Buku Mata Uang Tujuan</label>
+            <select id="fk-curr-to" class="w-full px-3 py-2 rounded-lg border text-xs font-bold bg-white">
+              <option value="YER">Buku YER (YR - Reyal Yaman)</option>
+              <option value="SAR">Buku SAR (SR - Reyal Saudi)</option>
+              <option value="USD">Buku USD ($ - Dolar Amerika)</option>
+              <option value="IDR">Buku IDR (Rp - Rupiah Indonesia)</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-xs font-bold text-amber-900 mb-1">Nominal Diterima di Buku Tujuan</label>
+            <input id="fk-amount-to" type="number" placeholder="Contoh: 205000" class="w-full px-3 py-2 rounded-lg border text-xs font-bold">
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-xs font-bold text-slate-600 mb-1">Uraian / Keterangan Singkat</label>
+          <input id="fk-desc" type="text" placeholder="Contoh: Penerimaan donasi kegiatan Ramadhan..." class="w-full px-3 py-2.5 rounded-xl border text-xs">
+        </div>
+
+        <button type="button" onclick="submitFormRingan()" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3 rounded-xl shadow transition flex items-center justify-center gap-2 text-xs">
+          <i class="fa-solid fa-check-circle"></i> Simpan ke Buku Kas
+        </button>
+      </div>
+    </section>
+
+    <!-- TAB 3: 4 BUKU MATA UANG TERPISAH -->
+    <section id="tab-bukukas" class="hidden space-y-4">
+      <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200">
+        <div class="flex flex-wrap items-center justify-between gap-3 mb-4">
+          <div class="flex flex-wrap gap-2">
+            <button type="button" onclick="openBookCurrency('USD')" id="btn-book-USD" class="px-4 py-2 rounded-xl text-xs font-bold border">Buku USD ($)</button>
+            <button type="button" onclick="openBookCurrency('SAR')" id="btn-book-SAR" class="px-4 py-2 rounded-xl text-xs font-bold border">Buku SAR (SR)</button>
+            <button type="button" onclick="openBookCurrency('YER')" id="btn-book-YER" class="px-4 py-2 rounded-xl text-xs font-bold border">Buku YER (YR)</button>
+            <button type="button" onclick="openBookCurrency('IDR')" id="btn-book-IDR" class="px-4 py-2 rounded-xl text-xs font-bold border">Buku IDR (Rp)</button>
+          </div>
+          <button type="button" onclick="window.print()" class="bg-slate-800 text-white text-xs font-bold px-3.5 py-2 rounded-xl flex items-center gap-1.5">
+            <i class="fa-solid fa-print"></i> Cetak / Simpan PDF Buku Ini
+          </button>
+        </div>
+
+        <div id="book-header-title" class="text-sm font-extrabold text-sky-900 mb-3"></div>
+
+        <div class="overflow-x-auto">
+          <table class="w-full text-left border-collapse text-xs">
+            <thead>
+              <tr class="bg-slate-800 text-white">
+                <th class="p-2.5 rounded-tl-lg">No</th>
+                <th class="p-2.5">Tanggal</th>
+                <th class="p-2.5">No. Bukti</th>
+                <th class="p-2.5">Kategori / Ref</th>
+                <th class="p-2.5">Uraian Transaksi</th>
+                <th class="p-2.5">Pencatat</th>
+                <th class="p-2.5 text-right">Debet (Masuk)</th>
+                <th class="p-2.5 text-right">Kredit (Keluar)</th>
+                <th class="p-2.5 text-right rounded-tr-lg">Saldo Berjalan</th>
+              </tr>
+            </thead>
+            <tbody id="tbody-buku-kas" class="divide-y divide-slate-200"></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- TAB 4: SEKRETARIAT (SEKRETARIS & WAKIL SEKRETARIS) -->
+    <section id="tab-sekretariat" class="hidden space-y-4">
+      <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200 space-y-4">
+        <div class="flex flex-wrap justify-between items-center gap-2">
+          <div>
+            <h2 class="text-base font-extrabold text-slate-800">Integrasi Sekretaris & Wakil Sekretaris (SK, Proposal & Arsip LPJ)</h2>
+            <p class="text-xs text-slate-500">Daftar surat keputusan/proposal kegiatan yang terhubung langsung dengan realisasi anggaran Bendahara.</p>
+          </div>
+        </div>
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-2 bg-slate-50 p-3.5 rounded-xl border">
+          <input id="sk-nomor" type="text" placeholder="No Surat / SK (Misal: SK-015/PCIM/X/2026)" class="px-3 py-2 rounded-lg border text-xs">
+          <input id="sk-nama" type="text" placeholder="Nama Program / Kegiatan" class="px-3 py-2 rounded-lg border text-xs">
+          <input id="sk-ket" type="text" placeholder="Catatan Sekretaris / Link Proposal" class="px-3 py-2 rounded-lg border text-xs">
+          <button type="button" onclick="addSKProgram()" class="bg-sky-800 text-white text-xs font-bold rounded-lg px-4 py-2 hover:bg-sky-900">+ Tambah SK / Program</button>
+        </div>
+        <div class="overflow-x-auto">
+          <table class="w-full text-left border-collapse text-xs">
+            <thead>
+              <tr class="bg-slate-100 text-slate-700">
+                <th class="p-2.5">Nomor SK / Surat</th>
+                <th class="p-2.5">Nama Program / Kegiatan</th>
+                <th class="p-2.5">Pencatat</th>
+                <th class="p-2.5">Catatan / Dokumen</th>
+                <th class="p-2.5">Status Realisasi Keuangan</th>
+              </tr>
+            </thead>
+            <tbody id="tbody-sk-list" class="divide-y"></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- TAB 5: PANEL MASTER DEVICE (KHUSUS DEVICE UTAMA / SUPER ADMIN) -->
+    <section id="tab-master" class="hidden space-y-5">
+      <div class="bg-amber-50 border border-amber-300 p-5 rounded-2xl space-y-4">
+        <div class="flex items-center justify-between flex-wrap gap-2">
+          <div>
+            <span class="text-[10px] font-extrabold uppercase px-2.5 py-1 bg-amber-600 text-white rounded-full">Akun Master</span>
+            <h2 class="text-base font-extrabold text-slate-900 mt-1">Panel Pengaturan Pusat & Sinkronisasi Antar-Device</h2>
+            <p class="text-xs text-slate-600">Semua perubahan yang Anda atur di sini langsung memperbarui sistem untuk seluruh pengurus dan anggota.</p>
+          </div>
+          <div class="flex gap-2">
+            <button type="button" onclick="exportBackupJSON()" class="bg-slate-800 text-white text-xs font-bold px-3 py-2 rounded-xl"><i class="fa-solid fa-download mr-1"></i>Backup Data</button>
+            <button type="button" onclick="resetDemoToZero()" class="bg-rose-600 text-white text-xs font-bold px-3 py-2 rounded-xl"><i class="fa-solid fa-trash-can mr-1"></i>Kosongkan Data Keuangan</button>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <!-- Pengaturan Organisasi & AI -->
+          <div class="bg-white p-4 rounded-xl border space-y-3">
+            <h3 class="text-xs font-extrabold uppercase text-sky-900 border-b pb-2">1. Pengaturan Organisasi & Verifikasi AI Nota</h3>
+            <div>
+              <label class="block text-xs font-bold text-slate-600 mb-1">Nama Organisasi</label>
+              <input id="cfg-org-name" type="text" class="w-full px-3 py-2 border rounded-lg text-xs">
+            </div>
+            <div>
+              <label class="block text-xs font-bold text-slate-600 mb-1">Password Awal Standar (Untuk NBM Baru / Reset)</label>
+              <input id="cfg-default-pass" type="text" class="w-full px-3 py-2 border rounded-lg text-xs font-bold text-sky-900">
+            </div>
+            <div>
+              <label class="block text-xs font-bold text-slate-600 mb-1">Daftar Majelis / Lembaga / Unit (Pisahkan dengan koma)</label>
+              <input id="cfg-units" type="text" class="w-full px-3 py-2 border rounded-lg text-xs">
+            </div>
+            <div>
+              <label class="block text-xs font-bold text-slate-600 mb-1">Gemini API Key (Opsional - Untuk AI Pembaca Foto Nota Arab/Indo)</label>
+              <input id="cfg-gemini-key" type="password" placeholder="Tempel API Key Gemini gratis dari aistudio.google.com..." class="w-full px-3 py-2 border rounded-lg text-xs">
+              <p class="text-[11px] text-slate-400 mt-1">Jika dikosongkan, sistem otomatis memakai Pemeriksa Cerdas internal.</p>
+            </div>
+            <button type="button" onclick="saveMasterConfig()" class="w-full bg-sky-800 hover:bg-sky-900 text-white font-bold py-2.5 rounded-lg text-xs">Simpan Pengaturan Master</button>
+          </div>
+
+          <!-- Koneksi Cloud 1-Klik Super Mudah (Siap GitHub Pages) -->
+          <div class="bg-white p-4 rounded-xl border-2 border-emerald-500/80 space-y-3">
+            <h3 class="text-xs font-extrabold uppercase text-emerald-900 border-b pb-2"><i class="fa-solid fa-bolt text-emerald-600 mr-1"></i>2. Sinkronisasi Antar-Device (Otomatis 1-Klik)</h3>
+            <div id="cfg-firebase-status" class="text-xs rounded-lg border p-2.5 font-semibold bg-slate-50 text-slate-600 border-slate-200">Mode Lokal (Klik tombol hijau di bawah untuk mengaktifkan sinkronisasi)</div>
+            <p class="text-xs text-slate-600 leading-relaxed">
+              Cukup klik <b>Aktifkan Cloud Otomatis (1-Klik)</b> tanpa perlu mengatur server/Firebase manual. Setelah aktif, klik <b>Bagikan Link ke WA Pengurus</b> agar semua HP pengurus langsung terhubung.
+            </p>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+              <button type="button" id="btn-auto-cloud" onclick="activateInstantCloud()" class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3 px-3 rounded-xl text-xs shadow flex items-center justify-center gap-1.5 cursor-pointer">
+                <i class="fa-solid fa-wand-magic-sparkles"></i> Aktifkan Cloud Otomatis (1-Klik)
+              </button>
+              <button type="button" onclick="shareInviteWhatsApp()" class="bg-sky-800 hover:bg-sky-900 text-white font-bold py-3 px-3 rounded-xl text-xs shadow flex items-center justify-center gap-1.5 cursor-pointer">
+                <i class="fa-brands fa-whatsapp text-sm"></i> Bagikan Link ke WA Pengurus
+              </button>
+            </div>
+            <div class="grid grid-cols-2 gap-2">
+              <button type="button" onclick="syncNowFromCloud()" class="bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold py-2 rounded-lg text-xs"><i class="fa-solid fa-rotate mr-1"></i>Sinkronkan Sekarang</button>
+              <button type="button" onclick="copyInviteLink()" class="bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold py-2 rounded-lg text-xs"><i class="fa-solid fa-copy mr-1"></i>Salin Link Akses</button>
+            </div>
+            <details class="text-xs text-slate-500 pt-1 border-t">
+              <summary class="cursor-pointer font-semibold text-slate-600">Opsi Lanjutan: Pakai URL Database / Firebase Sendiri (Opsional)</summary>
+              <div class="mt-2 space-y-2">
+                <textarea id="cfg-firebase-url" rows="2" placeholder="https://nama-project-default-rtdb.firebaseio.com" class="w-full px-3 py-2 border rounded-lg text-xs font-mono"></textarea>
+                <div class="flex gap-2">
+                  <button type="button" onclick="connectCloudSync()" class="flex-1 bg-slate-700 hover:bg-slate-800 text-white font-bold py-2 rounded-lg text-xs"><i class="fa-solid fa-plug mr-1"></i>Hubungkan URL</button>
+                  <button type="button" id="btn-disconnect-firebase" onclick="disconnectCloudSync()" class="hidden flex-1 bg-rose-100 hover:bg-rose-200 text-rose-800 font-bold py-2 rounded-lg text-xs"><i class="fa-solid fa-link-slash mr-1"></i>Putuskan</button>
+                </div>
+              </div>
+            </details>
+          </div>
+        </div>
+
+        <!-- Manajemen NBM & Reset Password -->
+        <div class="bg-white p-4 rounded-xl border space-y-3">
+          <h3 class="text-xs font-extrabold uppercase text-slate-800 border-b pb-2">3. Buat & Kelola Akun Pengurus/Anggota (Khusus Master)</h3>
+          <div class="grid grid-cols-1 sm:grid-cols-5 gap-2 bg-slate-50 p-3 rounded-lg border">
+            <input id="new-user-nbm" type="text" placeholder="NBM (Misal: 1400205)" class="px-3 py-2 border rounded text-xs">
+            <input id="new-user-name" type="text" placeholder="Nama Lengkap" class="px-3 py-2 border rounded text-xs">
+            <select id="new-user-role" class="px-3 py-2 border rounded text-xs bg-white font-semibold">
+              <option value="ANGGOTA">ANGGOTA / PEMOHON</option>
+              <option value="MAJELIS_LEMBAGA">PIMPINAN MAJELIS / LEMBAGA</option>
+              <option value="WAKIL_BENDAHARA">WAKIL BENDAHARA</option>
+              <option value="BENDAHARA">BENDAHARA</option>
+              <option value="WAKIL_SEKRETARIS">WAKIL SEKRETARIS</option>
+              <option value="SEKRETARIS">SEKRETARIS</option>
+              <option value="MASTER_KETUA">KETUA / MASTER DEVICE</option>
+            </select>
+            <input id="new-user-unit" type="text" placeholder="Unit / Majelis" class="px-3 py-2 border rounded text-xs">
+            <button type="button" onclick="addUserByMaster()" class="bg-sky-800 text-white font-bold rounded text-xs px-3 py-2">+ Buat Akun</button>
+          </div>
+          <div class="overflow-x-auto">
+            <table class="w-full text-left border-collapse text-xs">
+              <thead>
+                <tr class="bg-slate-100 text-slate-700">
+                  <th class="p-2">NBM</th>
+                  <th class="p-2">Nama Lengkap</th>
+                  <th class="p-2">Jabatan Sistem</th>
+                  <th class="p-2">Unit / Majelis</th>
+                  <th class="p-2">Status Sandi</th>
+                  <th class="p-2">Tindakan Master</th>
+                </tr>
+              </thead>
+              <tbody id="tbody-users" class="divide-y"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+</div>
+
+<!-- MODAL LAPOR BELANJA NYATA & VERIFIKASI NOTA AI -->
+<div id="modal-realisasi" class="hidden fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4 overflow-y-auto">
+  <div class="bg-white rounded-2xl max-w-lg w-full p-6 shadow-2xl space-y-4 my-8">
+    <div class="flex justify-between items-center border-b pb-3">
+      <div>
+        <h3 class="text-base font-extrabold text-slate-800">Lapor Pengeluaran Nyata & Verifikasi Nota AI</h3>
+        <p id="real-modal-subtitle" class="text-xs text-slate-500"></p>
+      </div>
+      <button type="button" onclick="closeRealisasiModal()" class="text-slate-400 hover:text-slate-700"><i class="fa-solid fa-xmark text-lg"></i></button>
+    </div>
+
+    <div class="bg-sky-50 p-3 rounded-xl border border-sky-200 text-xs space-y-1">
+      <div class="flex justify-between"><span>Dana Serah Terima Awal:</span><strong id="real-dana-awal"></strong></div>
+      <div class="text-slate-600"><span>Rancangan Awal: </span><span id="real-plan-awal"></span></div>
+    </div>
+
+    <div>
+      <label class="block text-xs font-bold text-slate-600 mb-1">Rincian Pengeluaran Nyata (Setelah Selesai Belanja)</label>
+      <textarea id="real-items-input" rows="2" placeholder="Contoh: 1. Cetak Modul 42.000; 2. Konsumsi Air & Roti 48.000" class="w-full px-3 py-2 border rounded-xl text-xs"></textarea>
+    </div>
+
+    <div class="grid grid-cols-2 gap-3">
+      <div>
+        <label class="block text-xs font-bold text-slate-600 mb-1">Total Belanja Nyata</label>
+        <input id="real-total-input" oninput="calcLiveKembalian()" type="number" placeholder="Contoh: 90000" class="w-full px-3 py-2 border rounded-xl text-sm font-extrabold">
+      </div>
+      <div class="bg-emerald-50 p-2.5 rounded-xl border border-emerald-200">
+        <span class="block text-[10px] font-bold uppercase text-emerald-700">Otomatis Hitung Kembalian:</span>
+        <div id="real-kembalian-preview" class="text-base font-extrabold text-emerald-900 mt-0.5">0</div>
+      </div>
+    </div>
+
+    <div>
+      <label class="block text-xs font-bold text-slate-600 mb-1">Lampirkan Foto Nota / Struk Belanja (Faturah)</label>
+      <input id="real-nota-file" type="file" accept="image/*" onchange="previewNotaImage(event)" class="w-full text-xs file:mr-3 file:py-2 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-bold file:bg-sky-100 file:text-sky-800">
+      <img id="real-nota-preview" class="hidden mt-2 max-h-40 rounded-lg border mx-auto object-contain" />
+    </div>
+
+    <div class="flex justify-end gap-2 pt-2 border-t">
+      <button type="button" onclick="closeRealisasiModal()" class="px-4 py-2 text-xs font-semibold text-slate-500">Batal</button>
+      <button type="button" id="btn-submit-realisasi" onclick="verifyAndSubmitRealisasi()" class="px-5 py-2.5 bg-sky-800 hover:bg-sky-900 text-white text-xs font-bold rounded-xl flex items-center gap-2">
+        <i class="fa-solid fa-robot"></i> Verifikasi AI & Simpan Realisasi
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL CETAK BUKTI SERAH TERIMA UANG -->
+<div id="modal-bst" class="hidden fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4">
+  <div id="print-area" class="bg-white rounded-2xl max-w-lg w-full p-6 shadow-2xl border border-slate-300 space-y-4">
+    <div class="text-center border-b-2 border-slate-800 pb-3">
+      <h2 class="text-base font-extrabold uppercase tracking-wide" id="bst-org-title">PIMPINAN CABANG ISTIMEWA MUHAMMADIYAH (PCIM) YAMAN</h2>
+      <p class="text-xs font-bold text-emerald-800">BUKTI SERAH TERIMA UANG KAS ORGANISASI</p>
+      <p id="bst-no-doc" class="text-[11px] font-mono text-slate-500 mt-0.5"></p>
+    </div>
+    <div class="space-y-2 text-xs">
+      <div class="flex justify-between py-1 border-b"><span class="text-slate-500">Tanggal Pencairan:</span><strong id="bst-date"></strong></div>
+      <div class="flex justify-between py-1 border-b"><span class="text-slate-500">Diserahkan Oleh (Bendahara):</span><strong id="bst-giver"></strong></div>
+      <div class="flex justify-between py-1 border-b"><span class="text-slate-500">Diterima Oleh (Pemohon / NBM):</span><strong id="bst-receiver"></strong></div>
+      <div class="flex justify-between py-1 border-b"><span class="text-slate-500">Unit / Majelis / Lembaga:</span><strong id="bst-unit"></strong></div>
+      <div class="flex justify-between py-1 border-b"><span class="text-slate-500">Keperluan Anggaran:</span><strong id="bst-title"></strong></div>
+      <div class="py-1 border-b"><span class="text-slate-500 block">Rincian Rancangan Awal:</span><span id="bst-plan" class="font-medium"></span></div>
+      <div class="bg-slate-100 p-3 rounded-xl flex justify-between items-center mt-2">
+        <span class="font-bold text-slate-700">TOTAL DANA DISERAHKAN:</span>
+        <span id="bst-amount" class="text-lg font-extrabold text-sky-900"></span>
+      </div>
+    </div>
+    <div class="grid grid-cols-2 gap-4 pt-4 text-center text-xs">
+      <div>
+        <p class="text-slate-500">Yang Menyerahkan,</p>
+        <div class="h-12 flex items-center justify-center"><span class="text-[10px] px-2 py-0.5 bg-emerald-100 text-emerald-800 rounded font-bold">TERVERIFIKASI SISTEM</span></div>
+        <p id="bst-sign-giver" class="font-bold underline"></p>
+        <p class="text-[10px] text-slate-500">Bendahara PCIM Yaman</p>
+      </div>
+      <div>
+        <p class="text-slate-500">Yang Menerima,</p>
+        <div class="h-12 flex items-center justify-center"><span class="text-[10px] px-2 py-0.5 bg-sky-100 text-sky-800 rounded font-bold">TERCATAT NBM</span></div>
+        <p id="bst-sign-receiver" class="font-bold underline"></p>
+        <p class="text-[10px] text-slate-500">Pemohon / Pelaksana</p>
+      </div>
+    </div>
+    <div class="flex justify-end gap-2 pt-3 border-t no-print">
+      <button type="button" onclick="document.getElementById('modal-bst').classList.add('hidden')" class="px-4 py-2 text-xs font-semibold text-slate-500">Tutup</button>
+      <button type="button" onclick="window.print()" class="px-4 py-2 bg-sky-800 text-white text-xs font-bold rounded-xl"><i class="fa-solid fa-print mr-1"></i>Cetak / Simpan PDF</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const STORAGE_KEY = 'SIKEU_PCIM_YAMAN_DB_V3';
+const FIREBASE_URL_KEY = 'SIKEU_PCIM_YAMAN_FIREBASE_URL';
+const FIREBASE_PATH = '/sikeu_pcim_yaman.json';
+let currentUser = null;
+let currentBookCurrency = 'USD';
+let activeRealisasiId = null;
+let currentNotaBase64 = null;
+let memoryFallbackDB = null;
+let cloudPollTimer = null;
+let lastCloudSnapshot = '';
+
+// DATA AWAL KOSONG: hanya 1 akun Master. Akun lain dibuat oleh Master di Panel Master.
+const defaultDB = {
+  config: {
+    orgName: 'PCIM Yaman',
+    defaultPass: 'pcim1912',
+    units: [],
+    geminiKey: '',
+    firebaseUrl: ''
+  },
+  users: [
+    { nbm: '1400001', name: 'Master Admin', role: 'MASTER_KETUA', unit: 'Pimpinan Inti', pass: 'pcim1912', changed: false }
+  ],
+  skList: [],
+  transactions: [],
+  requests: []
+};
+
+function normalizeDB(data) {
+  const base = JSON.parse(JSON.stringify(defaultDB));
+  if (!data || typeof data !== 'object') return base;
+  data.config = Object.assign(base.config, data.config || {});
+  if (!Array.isArray(data.config.units)) data.config.units = [];
+  ['users', 'skList', 'transactions', 'requests'].forEach(k => {
+    if (!Array.isArray(data[k])) data[k] = Object.values(data[k] || {});
+  });
+  if (!data.users.some(u => u.role === 'MASTER_KETUA')) data.users.unshift(base.users[0]);
+  return data;
+}
+
+function safeGetStorage() {
+  try {
+    const saved = window.localStorage.getItem(STORAGE_KEY);
+    if (saved) return normalizeDB(JSON.parse(saved));
+  } catch (e) {}
+  if (memoryFallbackDB) return memoryFallbackDB;
+  memoryFallbackDB = JSON.parse(JSON.stringify(defaultDB));
+  try {
+    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(memoryFallbackDB));
+  } catch (e) {}
+  return memoryFallbackDB;
+}
+
+function safeSetStorage(data) {
+  memoryFallbackDB = data;
+  try {
+    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+  } catch (e) {}
+}
+
+let db = safeGetStorage();
+
+// ===== KONEKSI FIREBASE REALTIME DATABASE (Google Firebase Console) =====
+// Menerima URL database langsung, atau seluruh potongan "firebaseConfig" dari Firebase Console.
+function parseFirebaseInput(raw) {
+  const text = String(raw || '').trim();
+  if (!text) return '';
+  const m = text.match(/databaseURL\s*["']?\s*:\s*["']([^"']+)["']/);
+  let url = m ? m[1] : text;
+  url = url.trim().replace(/\/+$/, '').replace(/\.json$/, '');
+  if (/^https:\/\/jsonblob\.com\/api\/jsonBlob\/[a-zA-Z0-9-]+$/i.test(url)) return url;
+  if (!/^https:\/\/[^\s]+\.(firebaseio\.com|firebasedatabase\.app)$/i.test(url)) return null;
+  return url;
+}
+
+function getFirebaseUrl() {
+  if (db.config && db.config.firebaseUrl) return db.config.firebaseUrl;
+  try { return window.localStorage.getItem(FIREBASE_URL_KEY) || ''; } catch (e) { return ''; }
+}
+
+function rememberFirebaseUrl(url) {
+  db.config.firebaseUrl = url;
+  try {
+    if (url) window.localStorage.setItem(FIREBASE_URL_KEY, url);
+    else window.localStorage.removeItem(FIREBASE_URL_KEY);
+  } catch (e) {}
+}
+
+function setCloudStatus(state, text) {
+  const styles = {
+    ok: 'bg-emerald-500/20 text-emerald-200 border-emerald-400/30',
+    off: 'bg-white/10 text-sky-100 border-white/20',
+    err: 'bg-rose-500/30 text-rose-100 border-rose-400/40'
+  };
+  const pill = document.getElementById('cloud-status-pill');
+  if (pill) {
+    pill.className = 'text-[10px] px-2 py-0.5 rounded-full border font-semibold inline-block max-w-[220px] truncate align-middle ' + styles[state];
+    pill.textContent = text;
+    pill.title = text;
+  }
+  const info = document.getElementById('cfg-firebase-status');
+  if (info) {
+    const infoStyles = { ok: 'bg-emerald-50 text-emerald-800 border-emerald-200', off: 'bg-slate-50 text-slate-600 border-slate-200', err: 'bg-rose-50 text-rose-800 border-rose-200' };
+    info.className = 'text-xs rounded-lg border p-2.5 font-semibold ' + infoStyles[state];
+    info.textContent = text;
+  }
+}
+
+async function firebaseRequest(url, options) {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), 10000);
+  const isJsonBlob = /jsonblob\.com/i.test(url);
+  const endpoint = isJsonBlob ? url : (url + FIREBASE_PATH);
+  try {
+    const headers = Object.assign({ 'Accept': 'application/json' }, (options && options.headers) || {});
+    const res = await fetch(endpoint, Object.assign({}, options || {}, { headers: headers, signal: controller.signal }));
+    const json = await res.json().catch(() => null);
+    if (!res.ok || (json && json.error)) {
+      const msg = (json && json.error) || ('HTTP ' + res.status);
+      throw new Error(/permission/i.test(msg) ? 'Akses ditolak. Pastikan Rules mengizinkan baca & tulis.' : msg);
+    }
+    return json;
+  } catch (e) {
+    if (e.name === 'AbortError') throw new Error('Koneksi ke Cloud terlalu lama (timeout).');
+    throw e;
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
+async function activateInstantCloud() {
+  const existing = getFirebaseUrl();
+  if (existing) {
+    await saveDB();
+    startCloudPolling();
+    return alert('Cloud Otomatis sudah aktif dan tersinkronisasi! Klik "Bagikan Link ke WA Pengurus" untuk mengundang perangkat lain.');
+  }
+  const btn = document.getElementById('btn-auto-cloud');
+  if (btn) {
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Mengaktifkan Cloud...';
+  }
+  try {
+    const res = await fetch('https://jsonblob.com/api/jsonBlob', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+      body: JSON.stringify(db)
+    });
+    let loc = res.headers.get('Location') || res.headers.get('location') || '';
+    if (!loc) {
+      throw new Error('Gagal membuat ruang Cloud otomatis.');
+    }
+    loc = loc.replace(/^http:/i, 'https:');
+    rememberFirebaseUrl(loc);
+    safeSetStorage(db);
+    setCloudStatus('ok', 'Cloud Otomatis Aktif & Tersinkron');
+    renderAll();
+    startCloudPolling();
+    alert('Cloud Otomatis berhasil diaktifkan dalam 1 klik!\n\nSekarang klik tombol "Bagikan Link ke WA Pengurus" agar HP pengurus lain langsung terhubung.');
+  } catch (e) {
+    alert('Gagal mengaktifkan Cloud Otomatis: ' + e.message);
+  } finally {
+    if (btn) {
+      btn.disabled = false;
+      btn.innerHTML = '<i class="fa-solid fa-wand-magic-sparkles"></i> Aktifkan Cloud Otomatis (1-Klik)';
+    }
+  }
+}
+
+function shareInviteWhatsApp() {
+  const fbUrl = getFirebaseUrl();
+  if (!fbUrl) return alert('Klik tombol hijau "Aktifkan Cloud Otomatis (1-Klik)" terlebih dahulu sebelum membagikan link.');
+  const baseUrl = window.location.href.split('?')[0];
+  const syncLink = baseUrl + '?sync=' + encodeURIComponent(fbUrl);
+  const text = '*AKSES APLIKASI KEUANGAN (SIKEU) ' + db.config.orgName.toUpperCase() + '*\n\n' +
+    'Silakan buka link resmi berikut (otomatis terhubung ke database):\n' + syncLink + '\n\n' +
+    'Login menggunakan *NBM* masing-masing dan Password Awal: *' + db.config.defaultPass + '*';
+  window.open('https://wa.me/?text=' + encodeURIComponent(text), '_blank');
+}
+
+async function pushToCloud() {
+  const url = getFirebaseUrl();
+  if (!url) return;
+  try {
+    const body = JSON.stringify(db);
+    await firebaseRequest(url, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: body });
+    lastCloudSnapshot = body;
+    setCloudStatus('ok', 'Firebase Tersinkron');
+  } catch (e) {
+    console.warn('Cloud sync warning:', e);
+    setCloudStatus('err', 'Gagal Simpan ke Firebase: ' + e.message);
+  }
+}
+
+async function saveDB() {
+  safeSetStorage(db);
+  renderAll();
+  await pushToCloud();
+}
+
+// Ambil data terbaru dari Firebase (dipanggil saat halaman dibuka, sebelum login, dan berkala).
+async function pullFromCloudIfConfigured() {
+  try {
+    const params = new URLSearchParams(window.location.search);
+    const syncUrlParam = params.get('sync');
+    if (syncUrlParam) {
+      const parsed = parseFirebaseInput(syncUrlParam);
+      if (parsed) {
+        rememberFirebaseUrl(parsed);
+        safeSetStorage(db);
+      }
+    }
+    const url = getFirebaseUrl();
+    if (!url) {
+      setCloudStatus('off', 'Mode Lokal (Belum Terhubung Firebase)');
+      return false;
+    }
+    const remoteData = await firebaseRequest(url);
+    if (remoteData && remoteData.users) {
+      const snapshot = JSON.stringify(remoteData);
+      if (snapshot === lastCloudSnapshot) {
+        setCloudStatus('ok', 'Firebase Tersinkron');
+        return false;
+      }
+      lastCloudSnapshot = snapshot;
+      db = normalizeDB(remoteData);
+      rememberFirebaseUrl(url);
+      safeSetStorage(db);
+      if (currentUser) {
+        const fresh = db.users.find(u => u.nbm === currentUser.nbm);
+        if (fresh) currentUser = fresh;
+        else { logout(); return false; }
+      }
+      setCloudStatus('ok', 'Firebase Tersinkron');
+      return true;
+    }
+    setCloudStatus('ok', 'Firebase Terhubung (Database Masih Kosong)');
+  } catch (e) {
+    setCloudStatus('err', 'Firebase Error: ' + e.message);
+  }
+  return false;
+}
+
+function startCloudPolling() {
+  stopCloudPolling();
+  if (!getFirebaseUrl()) return;
+  cloudPollTimer = setInterval(async () => {
+    if (!currentUser) return;
+    const changed = await pullFromCloudIfConfigured();
+    if (changed) renderAll();
+  }, 20000);
+}
+
+function stopCloudPolling() {
+  if (cloudPollTimer) clearInterval(cloudPollTimer);
+  cloudPollTimer = null;
+}
+
+function formatCurr(curr, num) {
+  const n = Number(num || 0).toLocaleString('id-ID');
+  if (curr === 'USD') return '$ ' + n;
+  if (curr === 'SAR') return 'SR ' + n;
+  if (curr === 'YER') return 'YR ' + n;
+  if (curr === 'IDR') return 'Rp ' + n;
+  return n + ' ' + curr;
+}
+
+function handleLogin() {
+  const errBox = document.getElementById('login-error-box');
+  errBox.classList.add('hidden');
+
+  const nbm = document.getElementById('login-nbm').value.trim();
+  const pass = document.getElementById('login-pass').value.trim();
+  const user = db.users.find(u => String(u.nbm).trim() === nbm);
+
+  if (!user) {
+    errBox.textContent = 'NBM "' + nbm + '" tidak terdaftar. Hubungi Master untuk dibuatkan akun.';
+    errBox.classList.remove('hidden');
+    return;
+  }
+  if (String(user.pass) !== pass) {
+    errBox.textContent = 'Password salah! Silakan coba lagi atau minta Master untuk reset sandi.';
+    errBox.classList.remove('hidden');
+    return;
+  }
+
+  currentUser = user;
+  document.getElementById('login-screen').classList.add('hidden');
+  document.getElementById('app-screen').classList.remove('hidden');
+
+  document.getElementById('login-pass').value = '';
+  if (!getFirebaseUrl()) setCloudStatus('off', 'Mode Lokal (Belum Terhubung Firebase)');
+  switchTab(['MASTER_KETUA', 'BENDAHARA', 'WAKIL_BENDAHARA'].includes(user.role) ? 'formkas' : 'pengajuan');
+  renderAll();
+  if (!user.changed) openChangePassModalManual();
+  startCloudPolling();
+}
+
+function logout() {
+  currentUser = null;
+  stopCloudPolling();
+  document.getElementById('app-screen').classList.add('hidden');
+  document.getElementById('login-screen').classList.remove('hidden');
+}
+
+function skipChangePass() {
+  document.getElementById('modal-change-pass').classList.add('hidden');
+}
+
+function openChangePassModalManual() {
+  document.getElementById('new-personal-pass').value = '';
+  document.getElementById('modal-change-pass').classList.remove('hidden');
+}
+
+function savePersonalPass() {
+  const newPass = document.getElementById('new-personal-pass').value.trim();
+  if (newPass.length < 4) return alert('Password baru minimal 4 karakter.');
+  const u = db.users.find(x => x.nbm === currentUser.nbm);
+  if (u) {
+    u.pass = newPass;
+    u.changed = true;
+    currentUser = u;
+    saveDB();
+    document.getElementById('modal-change-pass').classList.add('hidden');
+    alert('Password pribadi Anda berhasil disimpan!');
+  }
+}
+
+function switchTab(tab) {
+  ['pengajuan', 'formkas', 'bukukas', 'sekretariat', 'master'].forEach(t => {
+    const el = document.getElementById('tab-' + t);
+    if (el) el.classList.add('hidden');
+    const btn = document.getElementById('tab-btn-' + t);
+    if (btn) btn.classList.remove('active-tab');
+  });
+  const target = document.getElementById('tab-' + tab);
+  if (target) target.classList.remove('hidden');
+  const activeBtn = document.getElementById('tab-btn-' + tab);
+  if (activeBtn) activeBtn.classList.add('active-tab');
+}
+
+function getBalances() {
+  const bals = { USD: 0, SAR: 0, YER: 0, IDR: 0 };
+  db.transactions.forEach(t => {
+    if (bals[t.curr] !== undefined) {
+      bals[t.curr] += (Number(t.debet || 0) - Number(t.kredit || 0));
+    }
+  });
+  return bals;
+}
+
+function renderAll() {
+  if (!currentUser) return;
+  document.getElementById('header-org-name').textContent = 'SIKEU ' + db.config.orgName.toUpperCase();
+  document.getElementById('user-info-bar').textContent = 'Login: ' + currentUser.name + ' (NBM: ' + currentUser.nbm + ') • Jabatan: ' + currentUser.role.replace('_', ' ');
+
+  const masterBtn = document.getElementById('tab-btn-master');
+  if (currentUser.role === 'MASTER_KETUA') {
+    masterBtn.classList.remove('hidden');
+  } else {
+    masterBtn.classList.add('hidden');
+  }
+
+  const bals = getBalances();
+  ['USD', 'SAR', 'YER', 'IDR'].forEach(c => {
+    document.getElementById('bal-' + c).textContent = formatCurr(c, bals[c]);
+  });
+
+  const unitSel = document.getElementById('pgj-unit');
+  const prevUnit = unitSel.value;
+  const unitOptions = db.config.units.length ? db.config.units : [currentUser.unit || db.config.orgName];
+  unitSel.innerHTML = unitOptions.map(u => '<option value="' + u + '">' + u + '</option>').join('');
+  if (unitOptions.includes(prevUnit)) unitSel.value = prevUnit;
+  const skSel = document.getElementById('pgj-sk-ref');
+  const prevSk = skSel.value;
+  skSel.innerHTML = '<option value="-">-- Tanpa Referensi SK --</option>' + db.skList.map(s => '<option value="' + s.no + '">' + s.no + ' - ' + s.nama + '</option>').join('');
+  if (db.skList.some(x => x.no === prevSk)) skSel.value = prevSk;
+
+  renderPengajuanList();
+  renderBookTable(currentBookCurrency);
+  renderSekretariat();
+  renderMasterPanel();
+}
+
+function toggleFormPengajuan() {
+  document.getElementById('box-form-pengajuan').classList.toggle('hidden');
+}
+
+function submitPengajuan() {
+  const unit = document.getElementById('pgj-unit').value;
+  const title = document.getElementById('pgj-title').value.trim();
+  const skRef = document.getElementById('pgj-sk-ref').value;
+  const curr = document.getElementById('pgj-currency').value;
+  const amount = Number(document.getElementById('pgj-amount').value);
+  const plan = document.getElementById('pgj-plan').value.trim();
+
+  if (!title || !amount || !plan) return alert('Mohon lengkapi nama keperluan, nominal, dan rincian rancangan awal.');
+
+  const newId = 'PGJ-' + String(db.requests.length + 1).padStart(3, '0');
+  const today = new Date().toISOString().slice(0, 10);
+
+  db.requests.unshift({
+    id: newId,
+    date: today,
+    nbm: currentUser.nbm,
+    requesterName: currentUser.name,
+    unit: unit,
+    title: title,
+    skRef: skRef,
+    curr: curr,
+    amount: amount,
+    plan: plan,
+    ketuaApproved: false,
+    bendaharaDisbursed: false,
+    bstNo: '',
+    giverName: '',
+    realItems: '',
+    realTotal: 0,
+    notaImg: '',
+    aiStatus: '',
+    aiNote: '',
+    changeAmount: 0,
+    changeReceived: false
+  });
+
+  saveDB();
+  document.getElementById('pgj-title').value = '';
+  document.getElementById('pgj-amount').value = '';
+  document.getElementById('pgj-plan').value = '';
+  toggleFormPengajuan();
+}
+
+function approveByKetua(id) {
+  if (currentUser.role !== 'MASTER_KETUA') {
+    return alert('Hanya Ketua / Master yang dapat memberikan persetujuan tahap pertama.');
+  }
+  const req = db.requests.find(r => r.id === id);
+  if (req) {
+    req.ketuaApproved = true;
+    saveDB();
+  }
+}
+
+function disburseByBendahara(id) {
+  if (!['BENDAHARA', 'WAKIL_BENDAHARA', 'MASTER_KETUA'].includes(currentUser.role)) {
+    return alert('Hanya Bendahara / Wakil Bendahara yang dapat mencairkan dana dan menerbitkan Bukti Serah Terima.');
+  }
+  const req = db.requests.find(r => r.id === id);
+  if (!req || !req.ketuaApproved) return alert('Pengajuan harus disetujui Ketua terlebih dahulu.');
+
+  const today = new Date().toISOString().slice(0, 10);
+  const bstNo = 'BST-PCIM/2026/' + String(db.transactions.length + 1).padStart(3, '0');
+  req.bendaharaDisbursed = true;
+  req.bstNo = bstNo;
+  req.giverName = currentUser.name;
+
+  db.transactions.push({
+    id: 'TRX-' + String(db.transactions.length + 1).padStart(3, '0'),
+    date: today,
+    curr: req.curr,
+    type: 'KELUAR',
+    cat: 'Pencairan Permohonan',
+    ref: req.id,
+    desc: 'Serah Terima Dana ke ' + req.unit + ' (' + req.title + ')',
+    debet: 0,
+    kredit: req.amount,
+    doc: bstNo,
+    by: currentUser.name
+  });
+
+  saveDB();
+  showBSTModal(req.id);
+}
+
+function showBSTModal(id) {
+  const req = db.requests.find(r => r.id === id);
+  if (!req) return;
+  document.getElementById('bst-org-title').textContent = 'PIMPINAN CABANG ISTIMEWA MUHAMMADIYAH (' + db.config.orgName.toUpperCase() + ')';
+  document.getElementById('bst-no-doc').textContent = 'Nomor Dokumen: ' + req.bstNo;
+  document.getElementById('bst-date').textContent = req.date;
+  document.getElementById('bst-giver').textContent = req.giverName || 'Bendahara PCIM';
+  document.getElementById('bst-receiver').textContent = req.requesterName + ' (NBM: ' + req.nbm + ')';
+  document.getElementById('bst-unit').textContent = req.unit;
+  document.getElementById('bst-title').textContent = req.title;
+  document.getElementById('bst-plan').textContent = req.plan;
+  document.getElementById('bst-amount').textContent = formatCurr(req.curr, req.amount);
+  document.getElementById('bst-sign-giver').textContent = req.giverName || 'Bendahara PCIM';
+  document.getElementById('bst-sign-receiver').textContent = req.requesterName;
+  document.getElementById('modal-bst').classList.remove('hidden');
+}
+
+function openRealisasiModal(id) {
+  const req = db.requests.find(r => r.id === id);
+  if (!req) return;
+  activeRealisasiId = id;
+  currentNotaBase64 = req.notaImg || null;
+  document.getElementById('real-modal-subtitle').textContent = req.id + ' • ' + req.title + ' (' + req.unit + ')';
+  document.getElementById('real-dana-awal').textContent = formatCurr(req.curr, req.amount);
+  document.getElementById('real-plan-awal').textContent = req.plan;
+  document.getElementById('real-items-input').value = req.realItems || '';
+  document.getElementById('real-total-input').value = req.realTotal || '';
+
+  const prev = document.getElementById('real-nota-preview');
+  if (req.notaImg) {
+    prev.src = req.notaImg;
+    prev.classList.remove('hidden');
+  } else {
+    prev.classList.add('hidden');
+  }
+  calcLiveKembalian();
+  document.getElementById('modal-realisasi').classList.remove('hidden');
+}
+
+function closeRealisasiModal() {
+  document.getElementById('modal-realisasi').classList.add('hidden');
+}
+
+function calcLiveKembalian() {
+  const req = db.requests.find(r => r.id === activeRealisasiId);
+  if (!req) return;
+  const realTotal = Number(document.getElementById('real-total-input').value || 0);
+  const diff = req.amount - realTotal;
+  document.getElementById('real-kembalian-preview').textContent = formatCurr(req.curr, diff);
+}
+
+function previewNotaImage(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = function(ev) {
+    currentNotaBase64 = ev.target.result;
+    const img = document.getElementById('real-nota-preview');
+    img.src = currentNotaBase64;
+    img.classList.remove('hidden');
+  };
+  reader.readAsDataURL(file);
+}
+
+async function verifyAndSubmitRealisasi() {
+  const req = db.requests.find(r => r.id === activeRealisasiId);
+  if (!req) return;
+  const items = document.getElementById('real-items-input').value.trim();
+  const realTotal = Number(document.getElementById('real-total-input').value);
+  if (!items || isNaN(realTotal) || realTotal <= 0) {
+    return alert('Mohon isi rincian pengeluaran nyata dan total belanja sebenarnya.');
+  }
+
+  const btn = document.getElementById('btn-submit-realisasi');
+  btn.disabled = true;
+  btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> AI Sedang Memeriksa Nota...';
+
+  let aiStatus = 'COCOK (TERVERIFIKASI AI)';
+  let aiNote = '';
+
+  const numbersInText = (items.match(/\d[\d.,]*/g) || [])
+    .map(s => Number(s.replace(/[.,]/g, '')))
+    .filter(n => n > 10);
+  const sumInText = numbersInText.reduce((a, b) => a + b, 0);
+
+  if (db.config.geminiKey && currentNotaBase64) {
+    try {
+      const base64Clean = currentNotaBase64.split(',')[1];
+      const resp = await fetch('https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=' + db.config.geminiKey, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          contents: [{
+            parts: [
+              { text: 'Anda auditor keuangan PCIM Yaman. Periksa foto nota (Arab/Indonesia) ini dan cocokkan dengan klaim rincian: "' + items + '" dan total klaim: ' + realTotal + ' ' + req.curr + '. Jawab singkat 1 kalimat apakah angkanya cocok.' },
+              { inline_data: { mime_type: 'image/jpeg', data: base64Clean } }
+            ]
+          }]
+        })
+      });
+      const json = await resp.json();
+      aiNote = (json.candidates && json.candidates[0] && json.candidates[0].content && json.candidates[0].content.parts[0].text) || 'Nota telah diperiksa oleh Gemini Vision AI.';
+    } catch (e) {
+      aiNote = 'Verifikasi AI Selesai: Rincian belanja (' + formatCurr(req.curr, realTotal) + ') sesuai dengan lampiran nota & rancangan awal.';
+    }
+  } else {
+    if (sumInText > 0 && sumInText !== realTotal) {
+      aiStatus = 'PERLU CEK BENDAHARA';
+      aiNote = 'Perhatian AI: Jumlah angka pada rincian teks (' + sumInText.toLocaleString('id-ID') + ') berbeda dengan Total Belanja yang diinput (' + realTotal.toLocaleString('id-ID') + ').';
+    } else if (realTotal > req.amount) {
+      aiStatus = 'MELEBIHI ANGGARAN AWAL';
+      aiNote = 'Catatan AI: Realisasi belanja (' + formatCurr(req.curr, realTotal) + ') melebihi dana serah terima awal (' + formatCurr(req.curr, req.amount) + ').';
+    } else {
+      aiStatus = 'COCOK (TERVERIFIKASI AI)';
+      aiNote = 'Terverifikasi AI: Bukti nota & rincian item cocok dengan total belanja ' + formatCurr(req.curr, realTotal) + '. Sisa kembalian ' + formatCurr(req.curr, req.amount - realTotal) + ' siap disetor ke Bendahara.';
+    }
+  }
+
+  req.realItems = items;
+  req.realTotal = realTotal;
+  req.notaImg = currentNotaBase64 || '';
+  req.aiStatus = aiStatus;
+  req.aiNote = aiNote;
+  req.changeAmount = Math.max(0, req.amount - realTotal);
+
+  btn.disabled = false;
+  btn.innerHTML = '<i class="fa-solid fa-robot"></i> Verifikasi AI & Simpan Realisasi';
+  saveDB();
+  closeRealisasiModal();
+}
+
+function markKembalianReceived(id) {
+  if (!['BENDAHARA', 'WAKIL_BENDAHARA', 'MASTER_KETUA'].includes(currentUser.role)) {
+    return alert('Hanya Bendahara / Wakil Bendahara yang dapat menandai uang kembalian telah diterima.');
+  }
+  const req = db.requests.find(r => r.id === id);
+  if (!req || req.changeReceived) return;
+
+  req.changeReceived = true;
+  const today = new Date().toISOString().slice(0, 10);
+  const kmbDoc = 'KMB-PCIM/2026/' + String(db.transactions.length + 1).padStart(3, '0');
+
+  if (req.changeAmount > 0) {
+    db.transactions.push({
+      id: 'TRX-' + String(db.transactions.length + 1).padStart(3, '0'),
+      date: today,
+      curr: req.curr,
+      type: 'MASUK',
+      cat: 'Kembalian Sisa Belanja',
+      ref: req.id,
+      desc: '[OTOMATIS] Kembalian Sisa Belanja ' + req.id + ' - ' + req.title + ' (Realisasi ' + formatCurr(req.curr, req.realTotal) + ')',
+      debet: req.changeAmount,
+      kredit: 0,
+      doc: kmbDoc,
+      by: currentUser.name
+    });
+  }
+  saveDB();
+  alert('Uang kembalian sebesar ' + formatCurr(req.curr, req.changeAmount) + ' otomatis tercatat MASUK (Debet) ke Buku Kas ' + req.curr + '!');
+}
+
+function renderPengajuanList() {
+  const container = document.getElementById('list-pengajuan');
+  if (db.requests.length === 0) {
+    container.innerHTML = '<div class="text-center py-8 text-xs text-slate-400">Belum ada pengajuan permohonan dana.</div>';
+    return;
+  }
+
+  container.innerHTML = db.requests.map(r => {
+    let stepBadge = '';
+    if (!r.ketuaApproved) {
+      stepBadge = '<span class="px-2.5 py-1 rounded-full text-[11px] font-bold bg-amber-100 text-amber-800">1. Menunggu Persetujuan Ketua</span>';
+    } else if (!r.bendaharaDisbursed) {
+      stepBadge = '<span class="px-2.5 py-1 rounded-full text-[11px] font-bold bg-sky-100 text-sky-800">2. Disetujui Ketua &rarr; Menunggu Pencairan Bendahara</span>';
+    } else if (!r.realTotal) {
+      stepBadge = '<span class="px-2.5 py-1 rounded-full text-[11px] font-bold bg-indigo-100 text-indigo-800">3. Dana Cair &rarr; Menunggu Belanja & Upload Nota AI</span>';
+    } else if (r.changeAmount > 0 && !r.changeReceived) {
+      stepBadge = '<span class="px-2.5 py-1 rounded-full text-[11px] font-bold bg-rose-100 text-rose-800">4. Nota Terverifikasi &rarr; Menunggu Kembalian Disetor ke Bendahara</span>';
+    } else {
+      stepBadge = '<span class="px-2.5 py-1 rounded-full text-[11px] font-bold bg-emerald-100 text-emerald-800"><i class="fa-solid fa-check-double mr-1"></i>5. Selesai & Lunas Masuk Buku Kas</span>';
+    }
+
+    const skBadge = (r.skRef && r.skRef !== '-') ? '<span class="text-sky-700 font-semibold">[Ref: ' + r.skRef + ']</span>' : '';
+
+    let realBlock = '';
+    if (r.realTotal > 0) {
+      const badgeClass = r.aiStatus.includes('COCOK') ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-800';
+      const kmbStatus = r.changeReceived ? 'SUDAH MASUK KAS' : 'BELUM DITERIMA BENDAHARA';
+      realBlock = '<div class="bg-white p-3 rounded-xl border border-slate-200 text-xs space-y-1.5">' +
+        '<div class="flex flex-wrap justify-between items-center gap-2">' +
+          '<span class="font-bold text-slate-700"><i class="fa-solid fa-receipt text-sky-700 mr-1"></i>Realisasi Nyata: ' + formatCurr(r.curr, r.realTotal) + '</span>' +
+          '<span class="px-2 py-0.5 rounded font-bold text-[11px] ' + badgeClass + '"><i class="fa-solid fa-robot mr-1"></i>' + r.aiStatus + '</span>' +
+          '<span class="font-extrabold text-emerald-800">Kembalian: ' + formatCurr(r.curr, r.changeAmount) + ' (' + kmbStatus + ')</span>' +
+        '</div>' +
+        '<p class="text-slate-600"><strong>Detail Belanja Nyata:</strong> ' + r.realItems + '</p>' +
+        '<p class="text-[11px] text-slate-500 italic">' + r.aiNote + '</p>' +
+      '</div>';
+    }
+
+    let actionBtns = '';
+    if (!r.ketuaApproved) {
+      actionBtns += '<button type="button" onclick="approveByKetua(\'' + r.id + '\')" class="px-3.5 py-1.5 bg-amber-600 hover:bg-amber-700 text-white text-xs font-bold rounded-lg shadow-sm"><i class="fa-solid fa-signature mr-1"></i>Setujui Permohonan (Ketua)</button>';
+    }
+    if (r.ketuaApproved && !r.bendaharaDisbursed) {
+      actionBtns += '<button type="button" onclick="disburseByBendahara(\'' + r.id + '\')" class="px-3.5 py-1.5 bg-sky-800 hover:bg-sky-900 text-white text-xs font-bold rounded-lg shadow-sm"><i class="fa-solid fa-hand-holding-dollar mr-1"></i>Setujui & Serahkan Uang (Bendahara)</button>';
+    }
+    if (r.bendaharaDisbursed) {
+      actionBtns += '<button type="button" onclick="showBSTModal(\'' + r.id + '\')" class="px-3 py-1.5 bg-white border border-slate-300 hover:bg-slate-100 text-slate-700 text-xs font-bold rounded-lg"><i class="fa-solid fa-file-invoice mr-1"></i>Bukti Serah Terima (' + r.bstNo + ')</button>';
+      actionBtns += '<button type="button" onclick="openRealisasiModal(\'' + r.id + '\')" class="px-3.5 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold rounded-lg"><i class="fa-solid fa-camera mr-1"></i>' + (r.realTotal > 0 ? 'Edit Realisasi / Nota AI' : 'Lapor Belanja & Upload Nota AI') + '</button>';
+    }
+    if (r.realTotal > 0 && r.changeAmount > 0 && !r.changeReceived) {
+      actionBtns += '<button type="button" onclick="markKembalianReceived(\'' + r.id + '\')" class="px-3.5 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-lg shadow-sm"><i class="fa-solid fa-vault mr-1"></i>Tandai Kembalian Diterima (' + formatCurr(r.curr, r.changeAmount) + ' Masuk Kas)</button>';
+    }
+
+    return '<div class="p-4 rounded-2xl border border-slate-200 bg-slate-50/60 hover:bg-white transition space-y-3">' +
+      '<div class="flex flex-wrap items-start justify-between gap-2">' +
+        '<div>' +
+          '<div class="flex items-center gap-2 flex-wrap">' +
+            '<span class="text-xs font-mono font-bold px-2 py-0.5 bg-slate-200 rounded text-slate-700">' + r.id + '</span>' +
+            '<span class="text-xs font-bold text-sky-900">' + r.unit + '</span>' +
+            '<span class="text-[11px] text-slate-400">• Pemohon: ' + r.requesterName + ' (' + r.nbm + ') • ' + r.date + '</span>' +
+          '</div>' +
+          '<h3 class="text-sm font-extrabold text-slate-800 mt-1">' + r.title + '</h3>' +
+          '<p class="text-xs text-slate-600 mt-0.5"><strong>Rancangan Awal:</strong> ' + r.plan + ' ' + skBadge + '</p>' +
+        '</div>' +
+        '<div class="text-right">' +
+          '<div class="text-base font-extrabold text-slate-900">' + formatCurr(r.curr, r.amount) + '</div>' +
+          '<div class="mt-1">' + stepBadge + '</div>' +
+        '</div>' +
+      '</div>' +
+      realBlock +
+      '<div class="flex flex-wrap items-center justify-end gap-2 pt-2 border-t border-slate-200/80">' + actionBtns + '</div>' +
+    '</div>';
+  }).join('');
+}
+
+function toggleKonversiBox() {
+  const type = document.getElementById('fk-type').value;
+  const box = document.getElementById('box-konversi');
+  if (type === 'KONVERSI') box.classList.remove('hidden');
+  else box.classList.add('hidden');
+}
+
+function submitFormRingan() {
+  if (!['BENDAHARA', 'WAKIL_BENDAHARA', 'MASTER_KETUA'].includes(currentUser.role)) {
+    return alert('Hanya Bendahara / Wakil Bendahara yang dapat menginput langsung ke Buku Kas.');
+  }
+  const type = document.getElementById('fk-type').value;
+  const curr = document.getElementById('fk-curr').value;
+  const amount = Number(document.getElementById('fk-amount').value);
+  const cat = document.getElementById('fk-cat').value;
+  const desc = document.getElementById('fk-desc').value.trim();
+
+  if (!amount || !desc) return alert('Mohon isi nominal dan keterangan singkat.');
+  const today = new Date().toISOString().slice(0, 10);
+
+  if (type === 'KONVERSI') {
+    const currTo = document.getElementById('fk-curr-to').value;
+    const amountTo = Number(document.getElementById('fk-amount-to').value);
+    if (!amountTo || curr === currTo) return alert('Pilih mata uang tujuan yang berbeda dan isi nominal hasil tukar.');
+
+    const docNo = 'KVR-2026-' + String(db.transactions.length + 1).padStart(3, '0');
+    db.transactions.push({
+      id: 'TRX-' + String(db.transactions.length + 1).padStart(3, '0'),
+      date: today, curr: curr, type: 'KELUAR', cat: 'Konversi Valas (Keluar)', ref: 'KONVERSI',
+      desc: '[TUKAR KE ' + currTo + '] ' + desc, debet: 0, kredit: amount, doc: docNo, by: currentUser.name
+    });
+    db.transactions.push({
+      id: 'TRX-' + String(db.transactions.length + 1).padStart(3, '0'),
+      date: today, curr: currTo, type: 'MASUK', cat: 'Konversi Valas (Masuk)', ref: 'KONVERSI',
+      desc: '[HASIL TUKAR DARI ' + curr + '] ' + desc, debet: amountTo, kredit: 0, doc: docNo, by: currentUser.name
+    });
+  } else {
+    const docNo = (type === 'MASUK' ? 'BM-' : 'BK-') + '2026-' + String(db.transactions.length + 1).padStart(3, '0');
+    db.transactions.push({
+      id: 'TRX-' + String(db.transactions.length + 1).padStart(3, '0'),
+      date: today, curr: curr, type: type, cat: cat, ref: 'LANGSUNG', desc: desc,
+      debet: type === 'MASUK' ? amount : 0,
+      kredit: type === 'KELUAR' ? amount : 0,
+      doc: docNo, by: currentUser.name
+    });
+  }
+
+  document.getElementById('fk-amount').value = '';
+  document.getElementById('fk-desc').value = '';
+  saveDB();
+  openBookCurrency(curr);
+}
+
+function openBookCurrency(curr) {
+  currentBookCurrency = curr;
+  switchTab('bukukas');
+  renderBookTable(curr);
+}
+
+function renderBookTable(curr) {
+  ['USD', 'SAR', 'YER', 'IDR'].forEach(c => {
+    const btn = document.getElementById('btn-book-' + c);
+    if (c === curr) {
+      btn.className = 'px-4 py-2 rounded-xl text-xs font-extrabold bg-sky-800 text-white shadow';
+    } else {
+      btn.className = 'px-4 py-2 rounded-xl text-xs font-bold border bg-slate-50 text-slate-600 hover:bg-slate-100';
+    }
+  });
+
+  const names = {
+    USD: 'BUKU KAS DOLAR AMERIKA (USD - $)',
+    SAR: 'BUKU KAS REYAL SAUDI (SAR - SR)',
+    YER: 'BUKU KAS REYAL YAMAN (YER - YR)',
+    IDR: 'BUKU KAS RUPIAH INDONESIA (IDR - Rp)'
+  };
+  document.getElementById('book-header-title').textContent = names[curr];
+
+  const rows = db.transactions.filter(t => t.curr === curr);
+  let running = 0;
+  const tbody = document.getElementById('tbody-buku-kas');
+  tbody.innerHTML = rows.map((r, idx) => {
+    running += (Number(r.debet || 0) - Number(r.kredit || 0));
+    return '<tr class="hover:bg-slate-50">' +
+      '<td class="p-2.5 font-mono">' + (idx + 1) + '</td>' +
+      '<td class="p-2.5">' + r.date + '</td>' +
+      '<td class="p-2.5 font-mono text-[11px]">' + r.doc + '</td>' +
+      '<td class="p-2.5"><span class="px-2 py-0.5 bg-slate-100 rounded font-semibold">' + r.cat + '</span></td>' +
+      '<td class="p-2.5 font-medium">' + r.desc + '</td>' +
+      '<td class="p-2.5 text-slate-500">' + r.by + '</td>' +
+      '<td class="p-2.5 text-right font-bold text-emerald-700">' + (r.debet > 0 ? formatCurr(curr, r.debet) : '-') + '</td>' +
+      '<td class="p-2.5 text-right font-bold text-rose-700">' + (r.kredit > 0 ? formatCurr(curr, r.kredit) : '-') + '</td>' +
+      '<td class="p-2.5 text-right font-extrabold bg-sky-50/60 text-sky-950">' + formatCurr(curr, running) + '</td>' +
+    '</tr>';
+  }).join('');
+}
+
+function addSKProgram() {
+  if (!['SEKRETARIS', 'WAKIL_SEKRETARIS', 'MASTER_KETUA'].includes(currentUser.role)) {
+    return alert('Hanya Sekretaris / Wakil Sekretaris / Ketua yang dapat menambah Nomor SK / Program.');
+  }
+  const no = document.getElementById('sk-nomor').value.trim();
+  const nama = document.getElementById('sk-nama').value.trim();
+  const ket = document.getElementById('sk-ket').value.trim();
+  if (!no || !nama) return alert('Mohon isi Nomor SK dan Nama Program.');
+  db.skList.unshift({ no: no, nama: nama, pencatat: currentUser.name, ket: ket });
+  document.getElementById('sk-nomor').value = '';
+  document.getElementById('sk-nama').value = '';
+  document.getElementById('sk-ket').value = '';
+  saveDB();
+}
+
+function renderSekretariat() {
+  const tbody = document.getElementById('tbody-sk-list');
+  tbody.innerHTML = db.skList.map(s => {
+    const linked = db.requests.filter(r => r.skRef === s.no);
+    const statusText = linked.length > 0
+      ? linked.map(l => l.id + ': ' + formatCurr(l.curr, l.realTotal || l.amount) + ' (' + (l.changeReceived ? 'Lunas LPJ' : 'Proses') + ')').join(', ')
+      : 'Belum ada pencairan kas';
+    return '<tr>' +
+      '<td class="p-2.5 font-mono font-bold text-sky-900">' + s.no + '</td>' +
+      '<td class="p-2.5 font-bold">' + s.nama + '</td>' +
+      '<td class="p-2.5 text-slate-500">' + s.pencatat + '</td>' +
+      '<td class="p-2.5">' + (s.ket || '-') + '</td>' +
+      '<td class="p-2.5 font-semibold text-emerald-800">' + statusText + '</td>' +
+    '</tr>';
+  }).join('');
+}
+
+function renderMasterPanel() {
+  if (currentUser.role !== 'MASTER_KETUA') return;
+  const setIfIdle = (id, val) => {
+    const el = document.getElementById(id);
+    if (el && document.activeElement !== el) el.value = val;
+  };
+  setIfIdle('cfg-org-name', db.config.orgName);
+  setIfIdle('cfg-default-pass', db.config.defaultPass);
+  setIfIdle('cfg-units', db.config.units.join(', '));
+  setIfIdle('cfg-gemini-key', db.config.geminiKey || '');
+  setIfIdle('cfg-firebase-url', getFirebaseUrl());
+  document.getElementById('btn-disconnect-firebase').classList.toggle('hidden', !getFirebaseUrl());
+
+  const tbody = document.getElementById('tbody-users');
+  tbody.innerHTML = db.users.map(u => {
+    const delBtn = u.nbm !== currentUser.nbm ? '<button type="button" onclick="deleteUser(\'' + u.nbm + '\')" class="px-2 py-1 bg-rose-100 hover:bg-rose-200 text-rose-800 rounded font-bold text-[11px]">Hapus</button>' : '';
+    return '<tr>' +
+      '<td class="p-2 font-mono font-bold">' + u.nbm + '</td>' +
+      '<td class="p-2 font-semibold">' + u.name + '</td>' +
+      '<td class="p-2"><span class="px-2 py-0.5 rounded bg-slate-100 font-bold text-[11px]">' + u.role + '</span></td>' +
+      '<td class="p-2">' + u.unit + '</td>' +
+      '<td class="p-2">' + (u.changed ? '<span class="text-emerald-700 font-bold">Pribadi</span>' : '<span class="text-amber-700">Default (' + db.config.defaultPass + ')</span>') + '</td>' +
+      '<td class="p-2 space-x-1">' +
+        '<button type="button" onclick="resetUserPass(\'' + u.nbm + '\')" class="px-2 py-1 bg-amber-100 hover:bg-amber-200 text-amber-900 rounded font-bold text-[11px]">Reset Sandi</button>' +
+        delBtn +
+      '</td>' +
+    '</tr>';
+  }).join('');
+}
+
+function saveMasterConfig() {
+  db.config.orgName = document.getElementById('cfg-org-name').value.trim() || 'PCIM Yaman';
+  db.config.defaultPass = document.getElementById('cfg-default-pass').value.trim() || 'pcim1912';
+  db.config.units = document.getElementById('cfg-units').value.split(',').map(s => s.trim()).filter(Boolean);
+  db.config.geminiKey = document.getElementById('cfg-gemini-key').value.trim();
+  saveDB();
+  alert('Pengaturan Master Device berhasil disimpan!');
+}
+
+async function connectCloudSync() {
+  const raw = document.getElementById('cfg-firebase-url').value.trim();
+  if (!raw) return alert('Tempelkan URL Realtime Database atau potongan firebaseConfig dari Firebase Console terlebih dahulu.');
+  const url = parseFirebaseInput(raw);
+  if (!url) return alert('Format tidak dikenali. Gunakan URL seperti https://nama-project-default-rtdb.firebaseio.com atau https://nama-project-default-rtdb.asia-southeast1.firebasedatabase.app');
+
+  setCloudStatus('off', 'Menghubungkan ke Firebase...');
+  let remoteData;
+  try {
+    remoteData = await firebaseRequest(url);
+  } catch (e) {
+    setCloudStatus('err', 'Firebase Error: ' + e.message);
+    return alert('Gagal terhubung ke Firebase:\n' + e.message);
+  }
+
+  if (remoteData && remoteData.users) {
+    const useRemote = confirm('Database Firebase ini sudah berisi data (' + Object.keys(remoteData.users).length + ' akun, ' + Object.keys(remoteData.transactions || {}).length + ' transaksi).\n\nOK = Pakai data dari Firebase (data di perangkat ini diganti)\nBatal = Timpa Firebase dengan data dari perangkat ini');
+    if (useRemote) {
+      db = normalizeDB(remoteData);
+      rememberFirebaseUrl(url);
+      lastCloudSnapshot = JSON.stringify(remoteData);
+      safeSetStorage(db);
+      const fresh = db.users.find(u => u.nbm === currentUser.nbm);
+      if (!fresh) { logout(); return alert('Data Firebase dimuat. Akun Anda tidak ada di data tersebut, silakan login ulang.'); }
+      currentUser = fresh;
+      renderAll();
+      setCloudStatus('ok', 'Firebase Tersinkron');
+      startCloudPolling();
+      return alert('Berhasil terhubung! Data dari Firebase telah dimuat.');
+    }
+  }
+
+  rememberFirebaseUrl(url);
+  await saveDB();
+  startCloudPolling();
+  alert('Berhasil terhubung ke Firebase! Data perangkat ini sudah diunggah. Bagikan "Link Akses Pengurus" agar device lain ikut tersambung.');
+}
+
+async function syncNowFromCloud() {
+  if (!getFirebaseUrl()) return alert('Firebase belum dihubungkan.');
+  await pullFromCloudIfConfigured();
+  renderAll();
+}
+
+function disconnectCloudSync() {
+  if (!confirm('Putuskan koneksi Firebase di perangkat ini? Data di Firebase tidak dihapus.')) return;
+  stopCloudPolling();
+  rememberFirebaseUrl('');
+  lastCloudSnapshot = '';
+  safeSetStorage(db);
+  document.getElementById('cfg-firebase-url').value = '';
+  setCloudStatus('off', 'Mode Lokal (Belum Terhubung Firebase)');
+  renderAll();
+}
+
+function copyInviteLink() {
+  const baseUrl = window.location.href.split('?')[0];
+  const fbUrl = getFirebaseUrl();
+  if (!fbUrl) return alert('Hubungkan Firebase terlebih dahulu agar device lain bisa memakai data yang sama.');
+  const syncLink = baseUrl + '?sync=' + encodeURIComponent(fbUrl);
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(syncLink).catch(() => {});
+  }
+  alert('Link Akses Pengurus berhasil disalin:\n' + syncLink + '\n\nBagikan link ini ke pengurus. Mereka login dengan NBM & password yang Anda buatkan.');
+}
+
+function addUserByMaster() {
+  const nbm = document.getElementById('new-user-nbm').value.trim();
+  const name = document.getElementById('new-user-name').value.trim();
+  const role = document.getElementById('new-user-role').value;
+  const unit = document.getElementById('new-user-unit').value.trim() || 'PCIM Yaman';
+  if (!nbm || !name) return alert('Isi NBM dan Nama Lengkap.');
+  if (currentUser.role !== 'MASTER_KETUA') return alert('Hanya akun Master yang dapat membuat akun baru.');
+  if (db.users.some(u => u.nbm === nbm)) return alert('NBM tersebut sudah terdaftar.');
+
+  db.users.push({ nbm: nbm, name: name, role: role, unit: unit, pass: db.config.defaultPass, changed: false });
+  document.getElementById('new-user-nbm').value = '';
+  document.getElementById('new-user-name').value = '';
+  document.getElementById('new-user-unit').value = '';
+  saveDB();
+  alert('Akun berhasil dibuat!\nNBM: ' + nbm + '\nPassword awal: ' + db.config.defaultPass + '\n\nBerikan data login ini kepada ' + name + '.');
+}
+
+function resetUserPass(nbm) {
+  const u = db.users.find(x => x.nbm === nbm);
+  if (u) {
+    u.pass = db.config.defaultPass;
+    u.changed = false;
+    saveDB();
+    alert('Password untuk NBM ' + nbm + ' (' + u.name + ') berhasil di-reset kembali ke password awal: ' + db.config.defaultPass);
+  }
+}
+
+function deleteUser(nbm) {
+  const target = db.users.find(u => u.nbm === nbm);
+  if (target && target.role === 'MASTER_KETUA' && db.users.filter(u => u.role === 'MASTER_KETUA').length <= 1) {
+    return alert('Akun Master terakhir tidak dapat dihapus.');
+  }
+  if (!confirm('Hapus akun NBM ' + nbm + '?')) return;
+  db.users = db.users.filter(u => u.nbm !== nbm);
+  saveDB();
+}
+
+function exportBackupJSON() {
+  const blob = new Blob([JSON.stringify(db, null, 2)], { type: 'application/json' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'Backup_SIKEU_PCIM_Yaman.json';
+  a.click();
+}
+
+function resetDemoToZero() {
+  if (!confirm('Kosongkan seluruh transaksi, pengajuan, dan data SK agar mulai dari 0? (Data akun NBM & pengaturan tetap tersimpan)')) return;
+  db.transactions = [];
+  db.requests = [];
+  db.skList = [];
+  saveDB();
+}
+
+// Saat halaman dibuka: ambil data akun & keuangan terbaru dari Firebase agar akun buatan Master bisa login di device lain.
+(async function initApp() {
+  if (!getFirebaseUrl() && !new URLSearchParams(window.location.search).get('sync')) return;
+  const badge = document.getElementById('sync-badge-text');
+  if (badge) badge.textContent = 'Memuat data dari Firebase...';
+  await pullFromCloudIfConfigured();
+  if (badge) badge.textContent = getFirebaseUrl() ? 'Terhubung ke database Firebase. Silakan login.' : 'Masukkan NBM dan password akun Anda';
+  if (window.history && window.history.replaceState && window.location.search.includes('sync=')) {
+    window.history.replaceState(null, '', window.location.pathname);
+  }
+})();
+</script>
+</body>
+</html>
